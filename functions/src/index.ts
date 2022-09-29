@@ -12,11 +12,13 @@ export const notifyEmail = functions.firestore.document("/emails/{idEmail}").onC
   email.id=context.params.idEmail;
   email.timestamp=snapshot.get("timestamp").toMillis();
   return allTokens.docs.map((document)=>{
-    const token= document.get("token");
-    return admin.messaging().sendToDevice(token, {
-      data: {
-        notify: JSON.stringify(email),
-      },
+    const mapTokens = document.get("tokens") as Map<string, any>;
+    Object.keys(mapTokens).forEach((token) => {
+      admin.messaging().sendToDevice(token, {
+        data: {
+          notify: JSON.stringify(email),
+        },
+      });
     });
   });
 });
