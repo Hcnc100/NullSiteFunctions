@@ -6,7 +6,7 @@ Modernización de la fuente realmente desplegada de `notifyEmail`, recuperada de
 - Proyecto `nullpointer-716ae`, región `us-central1`, función `notifyEmailV2`, gen2.
 - Trigger de creación Firestore: `emails/{idEmail}`.
 - Lee `phones` y envía a `tokenGCM`; no modifica ni borra contactos ni teléfonos. Crea reclamaciones internas en `notification-deliveries`.
-- Datos FCM: idEmail, email, name, subject, isOpen, message, createdAt, updatedAt; todos cadenas. Fechas desde Timestamp.toMillis().
+- Datos FCM: conserva idEmail, email, name, subject, isOpen, message, createdAt, updatedAt; todos cadenas. Añade notify como JSON con id, timestamp numérico y los cuatro textos, compatible con MyFirebaseMessagingService/EmailDeserializer de NullSiteAdmin. Fechas desde Timestamp.toMillis().
 - Sin cambios de reglas, índices, documentos existentes, Hosting ni submitContact.
 - Runtime Node22; firebase-admin 14.5.0 y firebase-functions 7.4.0, fijados en lockfile.
 

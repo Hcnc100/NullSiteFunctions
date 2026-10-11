@@ -5,7 +5,19 @@ const email = { email: 'example@example.com', name: 'Example', subject: 'Test', 
   isOpen: false, createdAt: { toMillis: () => 1000 }, updatedAt: { toMillis: () => 2000 } };
 test('preserves deployed keys and string values', () => {
   assert.deepEqual(notificationData(email, 'id'), { idEmail: 'id', email: email.email, name: 'Example',
-    subject: 'Test', message: 'Hello', isOpen: 'false', createdAt: '1000', updatedAt: '2000' });
+    subject: 'Test', message: 'Hello', isOpen: 'false', createdAt: '1000', updatedAt: '2000',
+    notify: JSON.stringify({ id: 'id', timestamp: 1000, name: 'Example', email: email.email,
+      subject: 'Test', message: 'Hello' }) });
+});
+
+test('supports the mobile data.notify Gson contract without dropping flat client fields', () => {
+  const data = notificationData(email, 'document-id');
+  const mobile = JSON.parse(data.notify);
+  assert.deepEqual(Object.keys(mobile).sort(), ['email', 'id', 'message', 'name', 'subject', 'timestamp']);
+  assert.equal(mobile.id, data.idEmail);
+  assert.equal(mobile.timestamp, Number(data.createdAt));
+  for (const key of ['name', 'email', 'subject', 'message']) assert.equal(mobile[key], data[key]);
+  assert.ok(Object.values(data).every(value => typeof value === 'string'));
 });
 test('rejects malformed documents and oversized Unicode payloads', () => {
   for (const value of [null, {}, { ...email, isOpen: null }, { ...email, createdAt: {} },
