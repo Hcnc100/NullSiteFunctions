@@ -36,3 +36,16 @@ test('empty collection is a successful no-op', async () => {
 test('database failure remains observable', async () => {
   await assert.rejects(notifyCreatedEmail(email, 'id', { readPhones: async () => { throw Error('db unavailable'); }, send: () => assert.fail() }), /db unavailable/);
 });
+test('shared delivery claim prevents the second trigger sending again', async () => {
+  let claimed = false; let sends = 0;
+  const deps = {
+    readPhones: async () => [{ tokenGCM: 'device' }],
+    claim: async () => { if (claimed) return false; claimed = true; return true; },
+    send: async () => { sends++; },
+  };
+  const [old, next] = await Promise.all([
+    notifyCreatedEmail(email, 'same-email', deps), notifyCreatedEmail(email, 'same-email', deps),
+  ]);
+  assert.equal(sends, 1);
+  assert.equal([old, next].filter(result => result.duplicate).length, 1);
+});

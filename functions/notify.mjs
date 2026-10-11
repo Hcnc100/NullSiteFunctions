@@ -12,7 +12,7 @@ export function notificationData(email, idEmail) {
     return data;
   } catch { return null; }
 }
-export async function notifyCreatedEmail(email, idEmail, { readPhones, send }) {
+export async function notifyCreatedEmail(email, idEmail, { readPhones, send, claim = async () => true }) {
   const data = notificationData(email, idEmail);
   const result = { sent: 0, invalid: 0, failed: 0, skipped: 0, invalidDocument: !data };
   if (!data) return result;
@@ -24,6 +24,7 @@ export async function notifyCreatedEmail(email, idEmail, { readPhones, send }) {
     unique.add(token);
   }
   const tokens = [...unique];
+  if (tokens.length && !await claim(idEmail)) return { ...result, duplicate: true };
   for (let offset = 0; offset < tokens.length; offset += 10) {
     await Promise.all(tokens.slice(offset, offset + 10).map(async token => {
       try { await send({ data, token }); result.sent++; }
