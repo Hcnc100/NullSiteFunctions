@@ -44,4 +44,4 @@ jobs:
           project_id: nullpointer-716ae
           workload_identity_provider: projects/646388363945/locations/global/workloadIdentityPools/github-actions/providers/nullsitenotifications
           service_account: github-notify-deploy@nullpointer-716ae.iam.gserviceaccount.com
-      - run: npx --yes firebase-tools@15.22.1 deploy --only functions:notifyEmail --project nullpointer-716ae --non-interactive
+      - run: npx --yes firebase-tools@15.22.1 deploy --only functions:notifyEmailV2 --project nullpointer-716ae --non-interactive
