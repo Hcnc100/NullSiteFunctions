@@ -1,0 +1,47 @@
+name: Validate and deploy notifications
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: notifications-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      - run: npm --prefix functions ci
+      - run: npm --prefix functions test
+      - run: npm --prefix functions audit --audit-level=high
+      - run: node --check functions/index.mjs
+  deploy:
+    needs: validate
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+      - run: npm --prefix functions ci
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: nullpointer-716ae
+          workload_identity_provider: projects/646388363945/locations/global/workloadIdentityPools/github-actions/providers/nullsitenotifications
+          service_account: github-notify-deploy@nullpointer-716ae.iam.gserviceaccount.com
+      - run: npx --yes firebase-tools@15.22.1 deploy --only functions:notifyEmail --project nullpointer-716ae --non-interactive
