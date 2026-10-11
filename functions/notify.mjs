@@ -8,6 +8,10 @@ export function notificationData(email, idEmail) {
     if (![createdAt, updatedAt].every(value => Number.isSafeInteger(value) && value >= 0)) return null;
     const data = { idEmail, email: email.email, name: email.name, subject: email.subject,
       isOpen: String(email.isOpen), message: email.message, createdAt: String(createdAt), updatedAt: String(updatedAt) };
+    // NullSiteAdmin's Gson EmailDeserializer reads data.notify, id and timestamp.
+    // Retain flat keys for other installed clients; never add a notification block.
+    data.notify = JSON.stringify({ id: idEmail, timestamp: createdAt, name: email.name,
+      email: email.email, subject: email.subject, message: email.message });
     if (Buffer.byteLength(JSON.stringify(data), 'utf8') > 3500) return null;
     return data;
   } catch { return null; }
