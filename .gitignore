@@ -151,4 +151,4 @@ dist
 .svelte-kit
 
 # End of https://www.toptal.com/developers/gitignore/api/node,firebase
-/firebase.json
+# firebase.json is deployment configuration, not a secret.
