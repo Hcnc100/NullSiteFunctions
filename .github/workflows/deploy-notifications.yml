@@ -3,6 +3,11 @@ on:
   pull_request:
   push:
     branches: [main]
+    paths-ignore:
+      - '.github/scripts/**'
+      - '.github/workflows/deploy-notifications.yml'
+      - '.github/workflows/rollback-retained.yml'
+      - '.github/workflows/sync-retention.yml'
   workflow_dispatch:
 permissions:
   contents: read
