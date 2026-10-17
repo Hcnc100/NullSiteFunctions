@@ -1,0 +1,33 @@
+name: Roll back to protected historical image
+on:
+  workflow_dispatch:
+    inputs:
+      revision:
+        description: Existing ready revision of the protected previous image
+        required: true
+        type: string
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: notifications-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  rollback:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    env:
+      PROJECT_ID: nullpointer-716ae
+      REVISION: ${{ inputs.revision }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: google-github-actions/auth@v3
+        with:
+          project_id: nullpointer-716ae
+          workload_identity_provider: projects/646388363945/locations/global/workloadIdentityPools/github-actions/providers/nullsitenotifications
+          service_account: github-notify-deploy@nullpointer-716ae.iam.gserviceaccount.com
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Roll back and rotate protected images
+        run: python3 .github/scripts/artifact_retention.py rollback --project "$PROJECT_ID" --region us-central1 --service notifyemailv2 --revision "$REVISION" --state "$RUNNER_TEMP/retention-rollback.json"
