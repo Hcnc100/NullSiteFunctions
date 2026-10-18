@@ -13,6 +13,7 @@ permissions:
 concurrency:
   group: notifications-${{ github.ref }}
   cancel-in-progress: false
+  queue: max
 jobs:
   test:
     runs-on: ubuntu-latest
