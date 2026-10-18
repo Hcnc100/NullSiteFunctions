@@ -8,6 +8,7 @@ on:
       - '.github/workflows/deploy-notifications.yml'
       - '.github/workflows/rollback-retained.yml'
       - '.github/workflows/sync-retention.yml'
+      - '.github/workflows/retention-guard.yml'
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - name: Test image retention safeguards
-        run: python3 -B -m unittest discover -s .github/scripts -p 'test_artifact_retention.py'
+        run: python3 -B -m unittest discover -s .github/scripts -p 'test_*retention*.py'
       - uses: actions/setup-node@v6
         with:
           node-version: '22'
@@ -52,8 +53,12 @@ jobs:
           workload_identity_provider: projects/646388363945/locations/global/workloadIdentityPools/github-actions/providers/nullsitenotifications
           service_account: github-notify-deploy@nullpointer-716ae.iam.gserviceaccount.com
       - uses: google-github-actions/setup-gcloud@v3
+      - name: Gate release on native image retention
+        run: python3 .github/scripts/retention_guard.py --project nullpointer-716ae --service notifyemailv2
       - name: Capture notification image before deployment
         run: python3 .github/scripts/artifact_retention.py capture --project nullpointer-716ae --region us-central1 --service notifyemailv2 --state "$RUNNER_TEMP/retention-notify.json"
       - run: npx --yes firebase-tools@15.22.1 deploy --only functions:notifyEmailV2 --project nullpointer-716ae --non-interactive
       - name: Protect active and previous notification image
         run: python3 .github/scripts/artifact_retention.py sync --project nullpointer-716ae --region us-central1 --service notifyemailv2 --state "$RUNNER_TEMP/retention-notify.json"
+      - name: Verify retention after successful release
+        run: python3 .github/scripts/retention_guard.py --project nullpointer-716ae --service notifyemailv2
